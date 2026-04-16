@@ -1,17 +1,35 @@
 {
   "mcpServers": {
-    "vcf-auto-mcp": {
+    "vcf-auto-mcp-node": {
       "command": "node",
-      "args": ["D:/Github/vcf-auto-mcp/dist/index.js"],
+      "args": ["/path/to/vcf-auto-mcp/dist/index.js"],
       "env": {
-        "VCF_BASE_URL": "https://auto.gooddi.lab",
-        "VCF_ORG": "providerconsumptionorg",
-        "VCF_REFRESH_TOKEN": "YOUR_API_TOKEN_HERE",
+        "VCF_BASE_URL": "https://your-vcf-automation-url",
+        "VCF_ORG": "your-org-name",
+        "VCF_USERNAME": "admin",
+        "VCF_PASSWORD": "your-password",
+        "VCF_REFRESH_TOKEN": "",
         "TOKEN_REFRESH_BUFFER_SECONDS": "300",
         "API_TIMEOUT_MS": "30000",
         "API_MAX_RETRIES": "3",
         "LOG_LEVEL": "info"
       }
+    },
+    "vcf-auto-mcp-docker": {
+      "command": "docker",
+      "args": [
+        "run", "--rm", "-i",
+        "-e", "VCF_BASE_URL=https://your-vcf-automation-url",
+        "-e", "VCF_ORG=your-org-name",
+        "-e", "VCF_USERNAME=admin",
+        "-e", "VCF_PASSWORD=your-password",
+        "-e", "VCF_REFRESH_TOKEN=",
+        "-e", "TOKEN_REFRESH_BUFFER_SECONDS=300",
+        "-e", "API_TIMEOUT_MS=30000",
+        "-e", "API_MAX_RETRIES=3",
+        "-e", "LOG_LEVEL=info",
+        "vcf-auto-mcp:latest"
+      ]
     }
   }
 }
