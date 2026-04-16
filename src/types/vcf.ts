@@ -309,6 +309,65 @@ export interface VcfQuota {
   readonly lastUpdatedAt: string;
 }
 
+// ─── Custom Resources (form-service) ─────────────────────────────────────────
+
+/**
+ * Spring Pageable page wrapper returned by /form-service/api/custom/* list endpoints.
+ * Uses `content` array with `totalElements`/`totalPages` similar to VcfPage,
+ * but sourced from a different service with slightly different field availability.
+ */
+export interface VcfCustomResourcePage<T> {
+  readonly content: readonly T[];
+  readonly totalElements: number;
+  readonly totalPages: number;
+  readonly number: number;   // current page (zero-based)
+  readonly size: number;     // page size
+  readonly first: boolean;
+  readonly last: boolean;
+}
+
+/**
+ * A custom resource type definition managed by the form-service.
+ */
+export interface VcfCustomResourceType {
+  readonly id: string;
+  readonly displayName: string;
+  readonly description?: string;
+  readonly resourceType?: string;
+  readonly externalType?: string;
+  readonly projectId?: string;
+  readonly propertiesYaml?: string;
+  readonly schemaType?: string;
+  readonly createdAt?: string;
+  readonly createdBy?: string;
+  readonly lastUpdatedAt?: string;
+  readonly lastUpdatedBy?: string;
+}
+
+/**
+ * A resource action associated with a custom resource type.
+ * Named VcfResourceActionCustom to avoid collision with the existing VcfResourceAction
+ * which is scoped to deployment-level day-2 actions.
+ */
+export interface VcfResourceActionCustom {
+  readonly id: string;
+  readonly name: string;
+  readonly displayName?: string;
+  readonly description?: string;
+  readonly resourceType?: string;
+  readonly projectId?: string;
+  readonly runnableItem?: {
+    readonly id: string;
+    readonly name: string;
+    readonly type: string;   // e.g. 'abx.action' | 'vro.workflow'
+  };
+  readonly criteria?: Record<string, unknown>;
+  readonly createdAt?: string;
+  readonly createdBy?: string;
+  readonly lastUpdatedAt?: string;
+  readonly lastUpdatedBy?: string;
+}
+
 // ─── Approval ────────────────────────────────────────────────────────────────
 
 export interface VcfApprovalPolicy {

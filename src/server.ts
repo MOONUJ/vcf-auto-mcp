@@ -1,7 +1,7 @@
 /**
  * src/server.ts — MCP Server factory + tool registration
  *
- * Creates the McpServer instance and registers all 47 tools from 10 domains.
+ * Creates the McpServer instance and registers all 54 tools from 11 domains.
  * Tool dispatch follows a Map<name, handler> lookup for O(1) routing.
  *
  * Adding a new domain:
@@ -30,6 +30,7 @@ import { ABX_TOOLS } from './tools/abx.js';
 import { VRO_TOOLS } from './tools/vro.js';
 import { GOVERNANCE_TOOLS } from './tools/governance.js';
 import { APPROVAL_TOOLS } from './tools/approval.js';
+import { CUSTOM_RESOURCE_TOOLS } from './tools/customResource.js';
 import type { ToolEntry } from './tools/deployments.js';
 
 // ─── Aggregate all tools ──────────────────────────────────────────────────────
@@ -45,7 +46,8 @@ const ALL_TOOLS: ToolEntry[] = [
   ...ABX_TOOLS,         //  4 tools
   ...VRO_TOOLS,         //  5 tools
   ...GOVERNANCE_TOOLS,  //  2 tools
-  ...APPROVAL_TOOLS,    //  3 tools
+  ...APPROVAL_TOOLS,         //  3 tools
+  ...CUSTOM_RESOURCE_TOOLS,  //  7 tools  (resource_type: list, get, create, delete; resource_action: list, get, get_form_data)
 ];
 
 // O(1) dispatch map
@@ -98,14 +100,14 @@ export function createServer(): Server {
 }
 
 // ─── Tool count validation (compile-time documentation) ─────────────────────
-// Expected: 47 tools. Actual count logged at startup.
+// Expected: 54 tools. Actual count logged at startup.
 export function logToolRegistration(): void {
   process.stderr.write(
-    `[vcf-auto-mcp] Registered ${ALL_TOOLS.length} tools across 10 domains\n`,
+    `[vcf-auto-mcp] Registered ${ALL_TOOLS.length} tools across 11 domains\n`,
   );
-  if (ALL_TOOLS.length !== 47) {
+  if (ALL_TOOLS.length !== 54) {
     process.stderr.write(
-      `[vcf-auto-mcp] WARNING: Expected 47 tools, got ${ALL_TOOLS.length}\n`,
+      `[vcf-auto-mcp] WARNING: Expected 54 tools, got ${ALL_TOOLS.length}\n`,
     );
   }
 }
