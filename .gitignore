@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables (contains credentials)
+.env
+
+# Claude Code internal files (contains tokens and agent memory)
+.claude/
+
+# Credential/info documents
+VCF_Automation_INFO.md
+VCF_Automation_인증.pdf
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
