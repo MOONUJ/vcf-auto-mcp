@@ -1,0 +1,887 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Event Broker Service API",
+        "description": "Event-Broker Service exposes a REST API, providing access to operations with Event Broker.",
+        "contact": {
+            "name": "VMware",
+            "url": "https://www.vmware.com/",
+            "email": "sales@vmware.com"
+        },
+        "license": {
+            "name": "Copyright (c) 2025 Broadcom, Inc. All Rights Reserved.",
+            "url": "https://www.vmware.com/cloud-solutions.html"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://vcf-autovip.p-cloud.net",
+            "description": "Generated server url"
+        }
+    ],
+    "security": [
+        {
+            "Authorization": []
+        }
+    ],
+    "paths": {
+        "/event-broker/api/topics": {
+            "get": {
+                "tags": [
+                    "EventTopic"
+                ],
+                "summary": "Get all Event Topics",
+                "description": "Get all Event Topics with specified pageing parameters.",
+                "operationId": "getAllEventTopics",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page index (0..N)",
+                        "required": false,
+                        "schema": {
+                            "minimum": 0,
+                            "type": "integer",
+                            "default": 0
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "The size of the page to be returned",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "'Success' with Event Topics on pages",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageEventTopic"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/event-broker/api/topics/{id}": {
+            "get": {
+                "tags": [
+                    "EventTopic"
+                ],
+                "summary": "Retrieves Event Topic",
+                "description": "Retrieves Event Topic by id.",
+                "operationId": "getEventTopic",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "the id of Event Topic",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "'Success' with the Event Topic",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/EventTopic"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "'Not found' if no Event Topic with provided id"
+                    }
+                }
+            }
+        },
+        "/event-broker/api/subscriptions/{id}": {
+            "get": {
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "Retrieves Subscription",
+                "description": "Retrieves Subscription by id.",
+                "operationId": "getSubscription",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "the id of Subscription",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "'Success' with the Subscription",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Subscription"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "'Not found' if no Subscription with provided id"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Subscription"
+                ],
+                "summary": "Delete Subscription",
+                "description": "Delete Subscription. Only Solution users and system admin (e.g. for vRO) can manage subscriptions.",
+                "operationId": "deleteSubscription",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "the id of Subscription",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "'No Content' is returned on successful delete."
+                    }
+                }
+            }
+        },
+        "/event-broker/api/events": {
+            "get": {
+                "tags": [
+                    "Event"
+                ],
+                "summary": "Get Events",
+                "description": "Get Events by pages.",
+                "operationId": "getEvents",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page index (0..N)",
+                        "required": false,
+                        "schema": {
+                            "minimum": 0,
+                            "type": "integer",
+                            "default": 0
+                        }
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "The size of the page to be returned",
+                        "required": false,
+                        "schema": {
+                            "minimum": 1,
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "'Success' with Events on pages",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageEvent"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/event-broker/api/events/{id}": {
+            "get": {
+                "tags": [
+                    "Event"
+                ],
+                "summary": "Get Event by id",
+                "description": "Retrieve the details of a specified Event.",
+                "operationId": "getEvent",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The id of an Event.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "'Success' with the Event",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Event"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "'Not found' if no Event with provided id"
+                    }
+                }
+            }
+        },
+        "/event-broker/api/audit/filters/{filterId}": {
+            "get": {
+                "tags": [
+                    "Audit log filter"
+                ],
+                "operationId": "getAuditLogFilterEntryById",
+                "parameters": [
+                    {
+                        "name": "pageable",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/Pageable"
+                        }
+                    },
+                    {
+                        "name": "filterId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "user_name",
+                                "event_type",
+                                "entity_type"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PageAuditLogFilterEntry"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ComplexDataType": {
+                "required": [
+                    "label"
+                ],
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/DataType"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "schemaId": {
+                                "type": "string"
+                            },
+                            "label": {
+                                "type": "string"
+                            },
+                            "schema": {
+                                "$ref": "#/components/schemas/Schema"
+                            }
+                        }
+                    }
+                ]
+            },
+            "DataType": {
+                "required": [
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "typeId": {
+                        "type": "string",
+                        "enum": [
+                            "string",
+                            "integer",
+                            "decimal",
+                            "boolean",
+                            "dateTime",
+                            "secureString",
+                            "list",
+                            "complex"
+                        ]
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "discriminator": {
+                    "propertyName": "type"
+                }
+            },
+            "EventTopic": {
+                "required": [
+                    "name",
+                    "serviceTypeId",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "maxLength": 150,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "serviceTypeId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "orgId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 2000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "schema": {
+                        "$ref": "#/components/schemas/Schema"
+                    },
+                    "blockable": {
+                        "type": "boolean"
+                    },
+                    "shared": {
+                        "type": "boolean"
+                    },
+                    "tenancy": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Field": {
+                "required": [
+                    "dataType",
+                    "id"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "dataType": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/ComplexDataType"
+                            },
+                            {
+                                "$ref": "#/components/schemas/PrimitiveDataType"
+                            }
+                        ]
+                    },
+                    "readOnly": {
+                        "type": "boolean"
+                    },
+                    "multiValued": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PageEventTopic": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/EventTopic"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PageableObject": {
+                "type": "object",
+                "properties": {
+                    "offset": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "paged": {
+                        "type": "boolean"
+                    },
+                    "pageNumber": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "unpaged": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "PrimitiveDataType": {
+                "required": [
+                    "typeId"
+                ],
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/DataType"
+                    }
+                ]
+            },
+            "Schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "fields": {
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Field"
+                        }
+                    }
+                }
+            },
+            "SortObject": {
+                "type": "object",
+                "properties": {
+                    "empty": {
+                        "type": "boolean"
+                    },
+                    "sorted": {
+                        "type": "boolean"
+                    },
+                    "unsorted": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Subscription": {
+                "required": [
+                    "eventTopicId"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "eventTopicId": {
+                        "maxLength": 150,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "name": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "orgId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "ownerId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "subscriberId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "blocking": {
+                        "type": "boolean"
+                    },
+                    "description": {
+                        "maxLength": 2000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "criteria": {
+                        "type": "string"
+                    },
+                    "constraints": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "timeout": {
+                        "minimum": 0,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "messageTTL": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "requeueDelay": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "broadcast": {
+                        "type": "boolean"
+                    },
+                    "priority": {
+                        "minimum": 0,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "disabled": {
+                        "type": "boolean"
+                    },
+                    "system": {
+                        "type": "boolean"
+                    },
+                    "contextual": {
+                        "type": "boolean"
+                    }
+                },
+                "discriminator": {
+                    "propertyName": "type"
+                }
+            },
+            "Event": {
+                "required": [
+                    "eventTopicId",
+                    "eventType",
+                    "sourceIdentity",
+                    "sourceType",
+                    "userName"
+                ],
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "sourceType": {
+                        "maxLength": 300,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "sourceIdentity": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "timeStamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "headers": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "eventType": {
+                        "type": "string"
+                    },
+                    "eventTopicId": {
+                        "maxLength": 150,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "correlationType": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "correlationId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "description": {
+                        "maxLength": 4000,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "targetType": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "targetId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "userName": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "orgId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "maxLength": 255,
+                        "minLength": 0,
+                        "type": "string"
+                    }
+                }
+            },
+            "PageEvent": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Event"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Pageable": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "minimum": 0,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "minimum": 1,
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "AuditLogFilterEntry": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PageAuditLogFilterEntry": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AuditLogFilterEntry"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "Authorization": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    }
+}
