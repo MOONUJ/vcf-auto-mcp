@@ -259,38 +259,83 @@ export interface VcfAbxRun {
   readonly output?: Record<string, unknown>;
 }
 
-// ─── Orchestrator (vRO) ──────────────────────────────────────────────────────
+// ─── Orchestrator (vRO) — OrchestratorGateway API (/vro/ paths) ──────────────
 
+/**
+ * A vRO workflow definition as returned by GET /vro/workflows/{workflowId}.
+ * Fields marked optional may only appear when `expand` query param is provided.
+ */
 export interface VcfVroWorkflow {
   readonly id: string;
   readonly name: string;
   readonly description?: string;
-  readonly version: string;
-  readonly categoryName: string;
-  readonly inputParameters: readonly VcfVroParameter[];
-  readonly outputParameters: readonly VcfVroParameter[];
+  readonly version?: string;
+  readonly orgId?: string;
+  readonly href?: string;
+  /** Present when expand includes "inputParameters" */
+  readonly inputParameters?: readonly VcfVroParameter[];
+  /** Present when expand includes "outputParameters" */
+  readonly outputParameters?: readonly VcfVroParameter[];
+  /** Present when expand includes "integration" */
+  readonly integration?: {
+    readonly endpointConfigurationLink?: string;
+  };
 }
 
+/** A typed parameter descriptor used in workflow input/output definitions. */
 export interface VcfVroParameter {
   readonly name: string;
   readonly type: string;
   readonly description?: string;
-  readonly required: boolean;
+  readonly required?: boolean;
 }
 
-export interface VcfVroExecution {
+/**
+ * A workflow run as returned by GET /vro/runs or GET /vro/runs/{runId}.
+ * Corresponds to the OrchestratorGateway run object shape.
+ */
+export interface VcfVroRun {
   readonly id: string;
-  readonly workflowId: string;
-  readonly state: 'running' | 'completed' | 'failed' | 'canceled' | 'waiting';
-  readonly startDate: string;
+  readonly name?: string;
+  readonly runId?: string;
+  readonly ownerId?: string | null;
+  readonly orgId?: string;
+  readonly createdOn?: number;
+  readonly modifiedOn?: number;
+  readonly configurationId?: string;
+  /** Execution state: RUNNING, COMPLETED, FAILED, CANCELED, WAITING */
+  readonly state?: string;
+  readonly startDate?: string;
   readonly endDate?: string;
-  readonly startedBy: string;
+  readonly startedBy?: string;
   readonly error?: string;
   readonly outputParameters?: readonly {
     readonly name: string;
     readonly type: string;
     readonly value: unknown;
   }[];
+}
+
+/**
+ * A single log entry returned by GET /vro/runs/{runId}/logs.
+ */
+export interface VcfVroRunLog {
+  readonly timestamp?: number;
+  readonly severity?: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR';
+  readonly description?: string;
+  readonly origin?: string;
+}
+
+/**
+ * An aggregated workflow entry as returned by GET /vro/aggregated-workflows.
+ * Groups all runs of a given workflow under a single record.
+ */
+export interface VcfVroAggregatedWorkflow {
+  readonly id: string;
+  readonly name: string;
+  readonly count?: number;
+  readonly workflowId?: string;
+  readonly selfLink?: string;
 }
 
 // ─── Governance ───────────────────────────────────────────────────────────────

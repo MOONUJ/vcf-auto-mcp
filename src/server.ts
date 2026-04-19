@@ -1,7 +1,7 @@
 /**
  * src/server.ts — MCP Server factory + tool registration
  *
- * Creates the McpServer instance and registers all 54 tools from 11 domains.
+ * Creates the McpServer instance and registers all 57 tools from 11 domains.
  * Tool dispatch follows a Map<name, handler> lookup for O(1) routing.
  *
  * Adding a new domain:
@@ -44,7 +44,7 @@ const ALL_TOOLS: ToolEntry[] = [
   ...BLUEPRINT_TOOLS,   //  7 tools  (list, get, create, update, delete, validate, list_versions)
   ...IAAS_TOOLS,        //  4 tools
   ...ABX_TOOLS,         //  4 tools
-  ...VRO_TOOLS,         //  5 tools
+  ...VRO_TOOLS,         //  8 tools
   ...GOVERNANCE_TOOLS,  //  2 tools
   ...APPROVAL_TOOLS,         //  3 tools
   ...CUSTOM_RESOURCE_TOOLS,  //  7 tools  (resource_type: list, get, create, delete; resource_action: list, get, get_form_data)
@@ -100,14 +100,14 @@ export function createServer(): Server {
 }
 
 // ─── Tool count validation (compile-time documentation) ─────────────────────
-// Expected: 54 tools. Actual count logged at startup.
+// Expected: 57 tools. Actual count logged at startup.
 export function logToolRegistration(): void {
   process.stderr.write(
     `[vcf-auto-mcp] Registered ${ALL_TOOLS.length} tools across 11 domains\n`,
   );
-  if (ALL_TOOLS.length !== 54) {
+  if (ALL_TOOLS.length !== 57) {
     process.stderr.write(
-      `[vcf-auto-mcp] WARNING: Expected 54 tools, got ${ALL_TOOLS.length}\n`,
+      `[vcf-auto-mcp] WARNING: Expected 57 tools, got ${ALL_TOOLS.length}\n`,
     );
   }
 }
