@@ -23,9 +23,9 @@ const authGetTokenTool: ToolEntry = {
   definition: {
     name: 'vcf_auth_get_token',
     description:
-      'Obtain a VCF Automation Access Token from a Refresh Token. ' +
-      'Uses VCF_REFRESH_TOKEN from environment if refreshToken argument is omitted. ' +
-      'The token value is masked in the response — only metadata is returned.',
+      'Verify VCF Automation authentication. Forces a fresh token acquisition and returns metadata. ' +
+      'Supports both OAuth2 Refresh Token mode (if VCF_REFRESH_TOKEN is set or provided explicitly) ' +
+      'and VCD Session mode (username/password). Token value is masked — only metadata is returned.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -48,26 +48,29 @@ const authGetTokenTool: ToolEntry = {
       throw new McpError(ErrorCode.InvalidParams, `Input validation failed: ${msg}`);
     }
 
-    const refreshToken = input.refreshToken ?? config.VCF_REFRESH_TOKEN;
-    if (!refreshToken) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'No refresh token provided and VCF_REFRESH_TOKEN is not set in environment',
-      );
-    }
-    const result = await apiFetchToken(refreshToken);
+    const explicitRefreshToken = input.refreshToken;
+    const envRefreshToken = config.VCF_REFRESH_TOKEN;
 
-    // Force the provider cache to update if we used the env token
-    if (!input.refreshToken) {
-      await tokenProvider.forceRefresh();
+    // If an explicit refresh token is provided, use the OAuth2 flow directly
+    if (explicitRefreshToken) {
+      const result = await apiFetchToken(explicitRefreshToken);
+      return ok({
+        authMode: 'refresh_token',
+        tokenType: result.tokenType,
+        expiresIn: result.expiresIn,
+        accessTokenPrefix: result.accessToken.slice(0, 8) + '…[redacted]',
+        _note: 'Token fetched via explicit refresh token. Not cached in-process.',
+      });
     }
+
+    // No explicit token supplied — use the tokenProvider (handles both Mode A and Mode B)
+    const accessToken = await tokenProvider.forceRefresh();
+    const authMode = envRefreshToken ? 'refresh_token (env)' : 'session (username/password)';
 
     return ok({
-      tokenType: result.tokenType,
-      expiresIn: result.expiresIn,
-      // Return only a prefix — never expose the full token in chat
-      accessTokenPrefix: result.accessToken.slice(0, 8) + '…[redacted]',
-      _note: 'Token cached in-process. Subsequent API calls will use this token automatically.',
+      authMode,
+      accessTokenPrefix: accessToken.slice(0, 8) + '…[redacted]',
+      _note: 'Token refreshed and cached in-process. Subsequent API calls will use this token automatically.',
     });
   },
 };
