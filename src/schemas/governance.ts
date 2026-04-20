@@ -8,10 +8,10 @@ import { ProjectIdSchema } from './common.js';
 export const GovernanceGetQuotaSchema = ProjectIdSchema;
 
 export const GovernanceUpdateQuotaSchema = ProjectIdSchema.extend({
-  cpuLimit: z.number().int().min(0).optional().describe('vCPU limit (0 = unlimited)'),
-  memoryLimitMb: z.number().int().min(0).optional().describe('Memory limit in MB'),
-  storageGbLimit: z.number().int().min(0).optional().describe('Storage limit in GB'),
-  instanceCountLimit: z.number().int().min(0).optional().describe('Max VM instances'),
+  constraints: z.record(z.unknown()).optional().describe('Deployment placement constraints (zone, network, etc.)'),
+  properties:  z.record(z.unknown()).optional().describe('Custom project properties'),
+  operationTimeout: z.number().int().min(0).optional().describe('Operation timeout in minutes'),
+  sharedResources: z.boolean().optional().describe('Allow shared resources across project members'),
 });
 
 export type GovernanceGetQuotaInput = z.infer<typeof GovernanceGetQuotaSchema>;

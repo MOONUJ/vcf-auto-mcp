@@ -15,10 +15,7 @@ import type {
 } from '../schemas/blueprints.js';
 
 export async function apiListBlueprints(input: BlueprintListInput): Promise<VcfPage<VcfBlueprint>> {
-  const { projectId, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (projectId) params['projectId'] = projectId;
-  return vcfGet('/blueprint/api/blueprints', params);
+  return vcfGet('/blueprint/api/blueprints', input);
 }
 
 export async function apiGetBlueprint(input: BlueprintGetInput): Promise<VcfBlueprint> {
@@ -41,7 +38,7 @@ export async function apiDeleteBlueprint(input: BlueprintDeleteInput): Promise<v
 export async function apiValidateBlueprint(
   input: BlueprintValidateInput,
 ): Promise<VcfBlueprintValidation> {
-  return vcfPost('/blueprint/api/blueprints/validate', input);
+  return vcfPost('/blueprint/api/blueprint-validation', input);
 }
 
 export async function apiListBlueprintVersions(

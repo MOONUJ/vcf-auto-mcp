@@ -20,7 +20,7 @@ export const GOVERNANCE_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_governance_get_quota',
-      description: 'Get current resource quota usage and limits for a project.',
+      description: 'Get project governance settings: placement constraints, custom properties, operation timeout, and shared resource policy.',
       inputSchema: {
         type: 'object', required: ['projectId'],
         properties: { projectId: { type: 'string' } },
@@ -35,15 +35,15 @@ export const GOVERNANCE_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_governance_update_quota',
-      description: 'Update CPU, memory, storage, or instance count limits for a project. Set to 0 for unlimited.',
+      description: 'Update project governance settings: placement constraints, custom properties, operation timeout, and shared resource policy.',
       inputSchema: {
         type: 'object', required: ['projectId'],
         properties: {
           projectId: { type: 'string' },
-          cpuLimit: { type: 'number', minimum: 0, description: 'vCPU limit (0 = unlimited)' },
-          memoryLimitMb: { type: 'number', minimum: 0 },
-          storageGbLimit: { type: 'number', minimum: 0 },
-          instanceCountLimit: { type: 'number', minimum: 0 },
+          constraints: { type: 'object', description: 'Deployment placement constraints (zone, network, storage)' },
+          properties:  { type: 'object', description: 'Custom project properties (key-value)' },
+          operationTimeout: { type: 'number', description: 'Operation timeout in minutes (0 = no timeout)' },
+          sharedResources: { type: 'boolean', description: 'Allow members to share resources' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],

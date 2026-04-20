@@ -32,9 +32,12 @@ export const BLUEPRINT_TOOLS: ToolEntry[] = [
       inputSchema: {
         type: 'object',
         properties: {
-          projectId: { type: 'string' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
+          page:     { type: 'number', description: 'Zero-based page index (default: 0)' },
+          size:     { type: 'number', description: 'Page size (default: 20, max: 200)' },
+          sort:     { type: 'string', description: 'Sort, e.g. "updatedAt,DESC"' },
+          name:     { type: 'string', description: 'Filter by exact name' },
+          search:   { type: 'string', description: 'Search by name and description' },
+          projects: { type: 'array', items: { type: 'string' }, description: 'Filter by project IDs' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],

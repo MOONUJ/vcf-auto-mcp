@@ -3,11 +3,19 @@
  */
 
 import { z } from 'zod';
-import { PaginationSchema, UUIDSchema, BlueprintIdSchema, ProjectIdSchema } from './common.js';
+import { UUIDSchema, BlueprintIdSchema } from './common.js';
 
-export const BlueprintListSchema = PaginationSchema.extend({
-  projectId: UUIDSchema.optional(),
+// Blueprint API uses Spring Pageable, not OData
+const BlueprintPageSchema = z.object({
+  page:   z.coerce.number().int().min(0).default(0).describe('Zero-based page index'),
+  size:   z.coerce.number().int().min(1).max(200).default(20).describe('Page size'),
+  sort:   z.string().optional().describe('Sort field, e.g. "updatedAt,DESC"'),
+  name:   z.string().optional().describe('Filter by exact name'),
+  search: z.string().optional().describe('Search by name and description'),
+  projects: z.array(z.string()).optional().describe('Filter by project IDs (array)'),
 });
+
+export const BlueprintListSchema = BlueprintPageSchema;
 
 export const BlueprintGetSchema = BlueprintIdSchema;
 
@@ -31,7 +39,10 @@ export const BlueprintValidateSchema = z.object({
   projectId: UUIDSchema.optional().describe('Project context for constraint checks'),
 });
 
-export const BlueprintListVersionsSchema = BlueprintIdSchema.merge(PaginationSchema);
+export const BlueprintListVersionsSchema = BlueprintIdSchema.extend({
+  page: z.coerce.number().int().min(0).default(0),
+  size: z.coerce.number().int().min(1).max(200).default(20),
+});
 
 export type BlueprintListInput = z.infer<typeof BlueprintListSchema>;
 export type BlueprintGetInput = z.infer<typeof BlueprintGetSchema>;

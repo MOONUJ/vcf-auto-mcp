@@ -3,16 +3,23 @@
  */
 
 import { vcfGet, vcfPatch } from './client.js';
-import type { VcfQuota } from '../types/vcf.js';
 import type { GovernanceGetQuotaInput, GovernanceUpdateQuotaInput } from '../schemas/governance.js';
 
-export async function apiGetProjectQuota(input: GovernanceGetQuotaInput): Promise<VcfQuota> {
-  return vcfGet(`/project-service/api/projects/${input.projectId}/quota`);
+export async function apiGetProjectQuota(input: GovernanceGetQuotaInput): Promise<unknown> {
+  const project = await vcfGet<Record<string, unknown>>(`/project-service/api/projects/${input.projectId}`);
+  return {
+    projectId: input.projectId,
+    name: project['name'],
+    constraints: project['constraints'] ?? {},
+    properties: project['properties'] ?? {},
+    operationTimeout: project['operationTimeout'],
+    sharedResources: project['sharedResources'],
+  };
 }
 
 export async function apiUpdateProjectQuota(
   input: GovernanceUpdateQuotaInput,
-): Promise<VcfQuota> {
+): Promise<unknown> {
   const { projectId, ...body } = input;
-  return vcfPatch(`/project-service/api/projects/${projectId}/quota`, body);
+  return vcfPatch(`/project-service/api/projects/${projectId}`, body);
 }
