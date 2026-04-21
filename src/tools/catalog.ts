@@ -1,5 +1,10 @@
 /**
  * src/tools/catalog.ts — MCP tools for the Catalog domain
+ *
+ * Tools:
+ *   vcf_catalog_list_items  — GET /catalog/api/items
+ *   vcf_catalog_get_item    — GET /catalog/api/items/{id}
+ *   vcf_catalog_request     — POST /catalog/api/items/{id}/request
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
@@ -8,15 +13,11 @@ import {
   CatalogListItemsSchema,
   CatalogGetItemSchema,
   CatalogRequestSchema,
-  CatalogListRequestsSchema,
-  CatalogGetRequestSchema,
 } from '../schemas/catalog.js';
 import {
   apiListCatalogItems,
   apiGetCatalogItem,
   apiRequestCatalogItem,
-  apiListCatalogRequests,
-  apiGetCatalogRequest,
 } from '../api/catalog.js';
 import type { ToolEntry } from './deployments.js';
 
@@ -32,14 +33,16 @@ export const CATALOG_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_catalog_list_items',
-      description: 'List Service Catalog items available to the current user.',
+      description:
+        'List Service Catalog items available to the current user. Uses Spring Pageable pagination (page/size/sort).',
       inputSchema: {
         type: 'object',
         properties: {
-          projectId: { type: 'string', description: 'Filter by project UUID' },
+          projects: { type: 'string', description: 'Comma-separated project UUIDs to filter by' },
           search: { type: 'string', description: 'Partial name search' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
+          page: { type: 'number', description: 'Zero-based page index (default 0)' },
+          size: { type: 'number', description: 'Items per page (default 20)' },
+          sort: { type: 'string', description: "Sort criteria, e.g. 'name,ASC'" },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],
@@ -72,17 +75,20 @@ export const CATALOG_TOOLS: ToolEntry[] = [
     definition: {
       name: 'vcf_catalog_request',
       description:
-        'Request a Service Catalog item (async). Returns requestId for polling with vcf_catalog_get_request.',
+        'Request a Service Catalog item to create a deployment. ' +
+        'Spec: POST /catalog/api/items/{id}/request. ' +
+        'Returns an array with deploymentId and deploymentName for each created deployment.',
       inputSchema: {
         type: 'object',
         required: ['catalogItemId', 'deploymentName', 'projectId'],
         properties: {
-          catalogItemId: { type: 'string' },
-          catalogItemVersion: { type: 'string' },
-          deploymentName: { type: 'string', minLength: 1, maxLength: 256 },
-          projectId: { type: 'string' },
-          inputs: { type: 'object', additionalProperties: true },
-          reason: { type: 'string', maxLength: 512 },
+          catalogItemId: { type: 'string', description: 'Catalog item UUID (path parameter)' },
+          version: { type: 'string', description: 'Catalog item version (omit for latest)' },
+          deploymentName: { type: 'string', minLength: 1, maxLength: 900, description: 'Name for the resulting deployment' },
+          projectId: { type: 'string', description: 'Target project UUID' },
+          inputs: { type: 'object', additionalProperties: true, description: 'Catalog item input parameters' },
+          reason: { type: 'string', maxLength: 10240, description: 'Request reason' },
+          bulkRequestCount: { type: 'number', description: 'Number of deployments to create (default 1)' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],
@@ -90,43 +96,8 @@ export const CATALOG_TOOLS: ToolEntry[] = [
     handler: async (args) => {
       try {
         const result = await apiRequestCatalogItem(CatalogRequestSchema.parse(args));
-        return ok({ ...result, _hint: 'Poll with vcf_catalog_get_request' });
+        return ok(result);
       }
-      catch (e) { if (e instanceof McpError) throw e; throw ve(e); }
-    },
-  },
-  {
-    definition: {
-      name: 'vcf_catalog_list_requests',
-      description: 'List Service Catalog requests.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          catalogItemId: { type: 'string' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
-        },
-        additionalProperties: false,
-      } satisfies Tool['inputSchema'],
-    },
-    handler: async (args) => {
-      try { return ok(await apiListCatalogRequests(CatalogListRequestsSchema.parse(args))); }
-      catch (e) { if (e instanceof McpError) throw e; throw ve(e); }
-    },
-  },
-  {
-    definition: {
-      name: 'vcf_catalog_get_request',
-      description: 'Poll the status of a Service Catalog request.',
-      inputSchema: {
-        type: 'object',
-        required: ['requestId'],
-        properties: { requestId: { type: 'string' } },
-        additionalProperties: false,
-      } satisfies Tool['inputSchema'],
-    },
-    handler: async (args) => {
-      try { return ok(await apiGetCatalogRequest(CatalogGetRequestSchema.parse(args))); }
       catch (e) { if (e instanceof McpError) throw e; throw ve(e); }
     },
   },

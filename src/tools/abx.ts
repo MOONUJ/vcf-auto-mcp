@@ -26,13 +26,14 @@ export const ABX_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_abx_action_list',
-      description: 'List ABX (Action Based Extensibility) actions.',
+      description: 'List ABX (Action Based Extensibility) actions. Uses Spring Pageable pagination (page/size/sort).',
       inputSchema: {
         type: 'object',
         properties: {
-          projectId: { type: 'string' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
+          projectId: { type: 'string', description: 'Filter by project UUID' },
+          page: { type: 'number', description: 'Zero-based page index (default 0)' },
+          size: { type: 'number', description: 'Items per page (default 20)' },
+          sort: { type: 'string', description: "Sort criteria, e.g. 'name,ASC'" },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],
@@ -82,11 +83,11 @@ export const ABX_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_abx_action_get_run',
-      description: 'Poll the status and output of an ABX action run.',
+      description: 'Poll the status and output of an ABX action run. Spec: GET /abx/api/resources/action-runs/{id}.',
       inputSchema: {
-        type: 'object', required: ['actionId', 'runId'],
+        type: 'object', required: ['runId'],
         properties: {
-          actionId: { type: 'string' }, runId: { type: 'string' },
+          runId: { type: 'string', description: 'Action run UUID returned by vcf_abx_action_run' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],

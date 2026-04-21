@@ -12,9 +12,16 @@ import type {
 } from '../schemas/iaas.js';
 
 export async function apiListMachines(input: IaasMachineListInput): Promise<VcfPage<VcfMachine>> {
-  const { projectId, deploymentId, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (projectId) params['$filter'] = `(projectId eq '${projectId}')`;
+  const { projectId, deploymentId, $top, $skip, $filter, $orderby } = input;
+  const params: Record<string, unknown> = {};
+  if ($top !== undefined) params['$top'] = $top;
+  if ($skip !== undefined) params['$skip'] = $skip;
+  if ($orderby) params['$orderby'] = $orderby;
+  // Build $filter: combine user-provided filter with projectId shortcut
+  const filters: string[] = [];
+  if (projectId) filters.push(`(projectId eq '${projectId}')`);
+  if ($filter) filters.push($filter);
+  if (filters.length > 0) params['$filter'] = filters.join(' and ');
   if (deploymentId) params['deploymentId'] = deploymentId;
   return vcfGet('/iaas/api/machines', params);
 }
@@ -24,9 +31,15 @@ export async function apiGetMachine(input: IaasMachineGetInput): Promise<VcfMach
 }
 
 export async function apiListNetworks(input: IaasNetworkListInput): Promise<VcfPage<VcfNetwork>> {
-  const { projectId, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (projectId) params['$filter'] = `(projectId eq '${projectId}')`;
+  const { projectId, $top, $skip, $filter, $orderby } = input;
+  const params: Record<string, unknown> = {};
+  if ($top !== undefined) params['$top'] = $top;
+  if ($skip !== undefined) params['$skip'] = $skip;
+  if ($orderby) params['$orderby'] = $orderby;
+  const filters: string[] = [];
+  if (projectId) filters.push(`(projectId eq '${projectId}')`);
+  if ($filter) filters.push($filter);
+  if (filters.length > 0) params['$filter'] = filters.join(' and ');
   return vcfGet('/iaas/api/networks', params);
 }
 

@@ -1,23 +1,34 @@
 /**
  * src/api/catalog.ts — VCF Automation Catalog API calls
+ *
+ * Spec: Catalog_Deployment.yaml
+ * Endpoints:
+ *   GET  /catalog/api/items                    — list catalog items (Spring Pageable)
+ *   GET  /catalog/api/items/{id}               — get single catalog item
+ *   POST /catalog/api/items/{id}/request       — create deployment from catalog item
  */
 
 import { vcfGet, vcfPost } from './client.js';
-import type { VcfPage, VcfCatalogItem, VcfCatalogRequest } from '../types/vcf.js';
+import type { VcfPage, VcfCatalogItem } from '../types/vcf.js';
 import type {
   CatalogListItemsInput,
   CatalogGetItemInput,
   CatalogRequestInput,
-  CatalogListRequestsInput,
-  CatalogGetRequestInput,
 } from '../schemas/catalog.js';
+
+/** Response from POST /catalog/api/items/{id}/request */
+export interface CatalogItemRequestResponse {
+  deploymentId?: string;
+  deploymentName?: string;
+}
 
 export async function apiListCatalogItems(
   input: CatalogListItemsInput,
 ): Promise<VcfPage<VcfCatalogItem>> {
-  const { projectId, search, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (projectId) params['projectId'] = projectId;
+  const { projects, search, page, size, sort } = input;
+  const params: Record<string, unknown> = { page, size };
+  if (sort) params['sort'] = sort;
+  if (projects) params['projects'] = projects;
   if (search) params['search'] = search;
   return vcfGet('/catalog/api/items', params);
 }
@@ -30,31 +41,23 @@ export async function apiGetCatalogItem(
   return vcfGet(`/catalog/api/items/${input.catalogItemId}`, params);
 }
 
+/**
+ * Creates a deployment from a catalog item.
+ * Spec: POST /catalog/api/items/{id}/request
+ * The catalogItemId is a path parameter; remaining fields go in the request body.
+ * Returns an array of CatalogItemRequestResponse objects.
+ */
 export async function apiRequestCatalogItem(
   input: CatalogRequestInput,
-): Promise<{ requestId: string; deploymentId?: string; status: string }> {
+): Promise<CatalogItemRequestResponse[]> {
+  const { catalogItemId, ...bodyFields } = input;
   const body: Record<string, unknown> = {
-    catalogItemId: input.catalogItemId,
-    deploymentName: input.deploymentName,
-    projectId: input.projectId,
+    deploymentName: bodyFields.deploymentName,
+    projectId: bodyFields.projectId,
   };
-  if (input.catalogItemVersion) body['catalogItemVersion'] = input.catalogItemVersion;
-  if (input.inputs) body['inputs'] = input.inputs;
-  if (input.reason) body['reason'] = input.reason;
-  return vcfPost('/catalog/api/requests', body);
-}
-
-export async function apiListCatalogRequests(
-  input: CatalogListRequestsInput,
-): Promise<VcfPage<VcfCatalogRequest>> {
-  const { catalogItemId, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (catalogItemId) params['catalogItemId'] = catalogItemId;
-  return vcfGet('/catalog/api/requests', params);
-}
-
-export async function apiGetCatalogRequest(
-  input: CatalogGetRequestInput,
-): Promise<VcfCatalogRequest> {
-  return vcfGet(`/catalog/api/requests/${input.requestId}`);
+  if (bodyFields.version) body['version'] = bodyFields.version;
+  if (bodyFields.inputs) body['inputs'] = bodyFields.inputs;
+  if (bodyFields.reason) body['reason'] = bodyFields.reason;
+  if (bodyFields.bulkRequestCount !== undefined) body['bulkRequestCount'] = bodyFields.bulkRequestCount;
+  return vcfPost(`/catalog/api/items/${catalogItemId}/request`, body);
 }

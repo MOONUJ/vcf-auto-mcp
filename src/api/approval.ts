@@ -1,38 +1,69 @@
 /**
  * src/api/approval.ts — VCF Approval API calls
+ *
+ * Spec: Approval.json
+ * Endpoints:
+ *   GET  /approval/api/approvals           — list approval requests
+ *   GET  /approval/api/approvals/{id}      — get single approval request
+ *   POST /approval/api/approvals/action    — take action (APPROVE/REJECT/CANCEL)
+ *
+ * NOTE: These are approval *requests* (pending approvals for deployments).
+ * Approval *policies* are managed separately via /policy/api/policies.
  */
 
 import { vcfGet, vcfPost } from './client.js';
-import type { VcfPage, VcfApprovalPolicy, VcfApprovalRequest } from '../types/vcf.js';
+import type { VcfPage } from '../types/vcf.js';
 import type {
-  ApprovalListPoliciesInput,
+  ApprovalListRequestsInput,
   ApprovalGetRequestInput,
   ApprovalDecideInput,
 } from '../schemas/approval.js';
 
-export async function apiListApprovalPolicies(
-  input: ApprovalListPoliciesInput,
-): Promise<VcfPage<VcfApprovalPolicy>> {
-  const { projectId, enabled, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (projectId) params['projectId'] = projectId;
-  if (enabled !== undefined) params['enabled'] = enabled;
-  // NOTE: VCD-based VCF instances expose approval/policy under /policy/api/policies
-  // (not /approval/api/policies which returns 404 on this stack).
-  return vcfGet('/policy/api/policies', params);
+/** Approval request object from the Approval API */
+export interface VcfApprovalRequest {
+  id: string;
+  action?: string;
+  deploymentId?: string;
+  deploymentName?: string;
+  projectId?: string;
+  projectName?: string;
+  requestedBy?: string;
+  status?: string;
+  createdAt?: string;
+  expiryAt?: string;
+  decision?: string;
+  levels?: unknown[];
+  [key: string]: unknown;
+}
+
+export async function apiListApprovalRequests(
+  input: ApprovalListRequestsInput,
+): Promise<VcfPage<VcfApprovalRequest>> {
+  const { requestState, search, page, size, sort } = input;
+  const params: Record<string, unknown> = { page, size };
+  if (sort) params['sort'] = sort;
+  if (requestState) params['requestState'] = requestState;
+  if (search) params['search'] = search;
+  return vcfGet('/approval/api/approvals', params);
 }
 
 export async function apiGetApprovalRequest(
   input: ApprovalGetRequestInput,
 ): Promise<VcfApprovalRequest> {
-  return vcfGet(`/policy/api/requests/${input.approvalRequestId}`);
+  return vcfGet(`/approval/api/approvals/${input.approvalRequestId}`);
 }
 
+/**
+ * Approve, reject, or cancel an approval request.
+ * Spec: POST /approval/api/approvals/action
+ * Body: { action, comment, itemId }
+ */
 export async function apiDecideApprovalRequest(
   input: ApprovalDecideInput,
 ): Promise<VcfApprovalRequest> {
-  return vcfPost(`/policy/api/requests/${input.approvalRequestId}/decide`, {
-    decision: input.decision,
-    justification: input.justification,
+  return vcfPost('/approval/api/approvals/action', {
+    action: input.action,
+    comment: input.comment,
+    itemId: input.approvalRequestId,
   });
 }

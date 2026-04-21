@@ -17,12 +17,25 @@ import {
 // ─── vcf_deployment_list ──────────────────────────────────────────────────────
 
 export const DeploymentListSchema = PaginationSchema.extend({
-  projectId: UUIDSchema.optional().describe(
-    'Filter by project UUID',
-  ),
+  // Spec uses 'projects' (comma-separated UUIDs) not 'projectId'
+  projects: z
+    .string()
+    .optional()
+    .describe('Comma-separated project UUIDs to filter by'),
+  // Spec uses 'status' as comma-separated values; keep single-value shortcut for usability
   status: DeploymentStatusSchema.optional().describe(
     'Filter by deployment status',
   ),
+  search: z
+    .string()
+    .max(256)
+    .optional()
+    .describe('Free-text search across deployment names and resources'),
+  name: z
+    .string()
+    .max(256)
+    .optional()
+    .describe('Exact deployment name match'),
 });
 
 export type DeploymentListInput = z.infer<typeof DeploymentListSchema>;

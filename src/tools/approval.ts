@@ -1,14 +1,19 @@
 /**
  * src/tools/approval.ts — MCP tools for the Approval domain
+ *
+ * Tools:
+ *   vcf_approval_list_requests  — GET /approval/api/approvals
+ *   vcf_approval_get_request    — GET /approval/api/approvals/{id}
+ *   vcf_approval_decide         — POST /approval/api/approvals/action
  */
 
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import {
-  ApprovalListPoliciesSchema, ApprovalGetRequestSchema, ApprovalDecideSchema,
+  ApprovalListRequestsSchema, ApprovalGetRequestSchema, ApprovalDecideSchema,
 } from '../schemas/approval.js';
 import {
-  apiListApprovalPolicies, apiGetApprovalRequest, apiDecideApprovalRequest,
+  apiListApprovalRequests, apiGetApprovalRequest, apiDecideApprovalRequest,
 } from '../api/approval.js';
 import type { ToolEntry } from './deployments.js';
 
@@ -23,30 +28,41 @@ function ve(err: unknown): McpError {
 export const APPROVAL_TOOLS: ToolEntry[] = [
   {
     definition: {
-      name: 'vcf_approval_list_policies',
-      description: 'List approval policies, optionally filtered by project or enabled state.',
+      name: 'vcf_approval_list_requests',
+      description:
+        'List pending (or historical) approval requests for deployments. ' +
+        'Spec: GET /approval/api/approvals. Uses Spring Pageable pagination.',
       inputSchema: {
         type: 'object',
         properties: {
-          projectId: { type: 'string' }, enabled: { type: 'boolean' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
+          requestState: {
+            type: 'string',
+            enum: ['APPROVED', 'REJECTED', 'PENDING', 'EXPIRED', 'CANCELLED'],
+            description: 'Filter by approval request state',
+          },
+          search: {
+            type: 'string',
+            description: 'Search across deploymentId, deploymentName, projectId, requestedBy or action',
+          },
+          page: { type: 'number', description: 'Zero-based page index (default 0)' },
+          size: { type: 'number', description: 'Items per page (default 20)' },
+          sort: { type: 'string', description: "Sort criteria, e.g. 'createdAt,DESC'" },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],
     },
     handler: async (args) => {
-      try { return ok(await apiListApprovalPolicies(ApprovalListPoliciesSchema.parse(args))); }
+      try { return ok(await apiListApprovalRequests(ApprovalListRequestsSchema.parse(args))); }
       catch (e) { if (e instanceof McpError) throw e; throw ve(e); }
     },
   },
   {
     definition: {
       name: 'vcf_approval_get_request',
-      description: 'Get details of a pending approval request.',
+      description: 'Get details of a single approval request. Spec: GET /approval/api/approvals/{id}.',
       inputSchema: {
         type: 'object', required: ['approvalRequestId'],
-        properties: { approvalRequestId: { type: 'string' } },
+        properties: { approvalRequestId: { type: 'string', description: 'Approval request UUID' } },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],
     },
@@ -58,13 +74,20 @@ export const APPROVAL_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_approval_decide',
-      description: 'Approve or reject a pending approval request. A justification is required.',
+      description:
+        'Approve, reject, or cancel a pending approval request. ' +
+        'Spec: POST /approval/api/approvals/action. ' +
+        'Body fields: action (APPROVE/REJECT/CANCEL), comment, itemId (approval request UUID).',
       inputSchema: {
-        type: 'object', required: ['approvalRequestId', 'decision', 'justification'],
+        type: 'object', required: ['approvalRequestId', 'action'],
         properties: {
-          approvalRequestId: { type: 'string' },
-          decision: { type: 'string', enum: ['APPROVED', 'REJECTED'] },
-          justification: { type: 'string', minLength: 5, maxLength: 1024 },
+          approvalRequestId: { type: 'string', description: 'Approval request UUID' },
+          action: {
+            type: 'string',
+            enum: ['APPROVE', 'REJECT', 'CANCEL'],
+            description: 'Action to take on the approval request',
+          },
+          comment: { type: 'string', maxLength: 2048, description: 'Approver comment / justification' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],

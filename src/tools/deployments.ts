@@ -58,13 +58,13 @@ const deploymentListTool: ToolEntry = {
   definition: {
     name: 'vcf_deployment_list',
     description:
-      'List VCF Automation deployments. Supports filtering by project, status, and OData pagination ($top, $skip, $filter, $orderby).',
+      'List VCF Automation deployments. Uses Spring Pageable pagination (page/size/sort). Supports filtering by projects, status, name, and search.',
     inputSchema: {
       type: 'object',
       properties: {
-        projectId: {
+        projects: {
           type: 'string',
-          description: 'Filter by project UUID',
+          description: 'Comma-separated project UUIDs to filter by',
         },
         status: {
           type: 'string',
@@ -76,10 +76,11 @@ const deploymentListTool: ToolEntry = {
           ],
           description: 'Filter by deployment status',
         },
-        $top: { type: 'number', description: 'Max items to return (default 20, max 1000)' },
-        $skip: { type: 'number', description: 'Items to skip for pagination' },
-        $filter: { type: 'string', description: "OData filter, e.g. \"name eq 'my-deploy'\"" },
-        $orderby: { type: 'string', description: "Sort field, e.g. 'createdAt desc'" },
+        search: { type: 'string', description: 'Free-text search across deployment names and resources' },
+        name: { type: 'string', description: 'Exact deployment name match' },
+        page: { type: 'number', description: 'Zero-based page index (default 0)' },
+        size: { type: 'number', description: 'Items per page (default 20, max 1000)' },
+        sort: { type: 'string', description: "Sort criteria, e.g. 'createdAt,DESC'" },
       },
       additionalProperties: false,
     },

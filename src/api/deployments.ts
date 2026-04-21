@@ -30,10 +30,13 @@ import type {
 export async function apiListDeployments(
   input: DeploymentListInput,
 ): Promise<VcfPage<VcfDeploymentSummary>> {
-  const { projectId, status, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
-  if (projectId) params['projectId'] = projectId;
+  const { projects, status, search, name, page, size, sort } = input;
+  const params: Record<string, unknown> = { page, size };
+  if (sort) params['sort'] = sort;
+  if (projects) params['projects'] = projects;
   if (status) params['status'] = status;
+  if (search) params['search'] = search;
+  if (name) params['name'] = name;
 
   return vcfGet<VcfPage<VcfDeploymentSummary>>(
     '/deployment/api/deployments',

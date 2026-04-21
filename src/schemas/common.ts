@@ -28,7 +28,10 @@ export const NonEmptyStringSchema = (maxLength: number) =>
 // ─── Pagination (OData-style) ─────────────────────────────────────────────────
 
 /**
- * PaginationSchema — extend this for any list tool that accepts OData params.
+ * PaginationSchema — Spring Pageable style pagination used by Deployment/Catalog/Resources/ABX.
+ * Use page (0-based) + size instead of $top/$skip.
+ *
+ * IaaS API uses OData ($top/$skip) — see IaasODataPaginationSchema below.
  *
  * @example
  * const DeploymentListSchema = PaginationSchema.extend({
@@ -36,32 +39,58 @@ export const NonEmptyStringSchema = (maxLength: number) =>
  * });
  */
 export const PaginationSchema = z.object({
-  $top: z.coerce
+  page: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .describe('Zero-based page index (default 0)'),
+
+  size: z.coerce
     .number()
     .int()
     .min(1)
     .max(1000)
     .default(20)
-    .describe('Maximum number of items to return (page size)'),
+    .describe('Number of items per page (default 20, max 1000)'),
+
+  sort: z
+    .string()
+    .max(128)
+    .optional()
+    .describe("Sort criteria, e.g. 'createdAt,DESC'"),
+});
+
+/**
+ * OData pagination for IaaS (Cloud Assembly) APIs which use $top/$skip.
+ */
+export const IaasODataPaginationSchema = z.object({
+  $top: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1000)
+    .optional()
+    .describe('Maximum number of items to return'),
 
   $skip: z.coerce
     .number()
     .int()
     .min(0)
-    .default(0)
-    .describe('Number of items to skip (offset-based pagination)'),
+    .optional()
+    .describe('Number of items to skip'),
 
   $filter: z
     .string()
     .max(512)
     .optional()
-    .describe("OData filter expression, e.g. \"status eq 'CREATE_SUCCESSFUL'\""),
+    .describe("OData filter expression, e.g. \"(projectId eq 'uuid')\""),
 
   $orderby: z
     .string()
     .max(128)
     .optional()
-    .describe("Sort field and direction, e.g. 'createdAt desc'"),
+    .describe("Sort field and direction, e.g. 'name asc'"),
 });
 
 export type PaginationInput = z.infer<typeof PaginationSchema>;

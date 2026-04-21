@@ -19,9 +19,12 @@ export const AbxActionRunSchema = z.object({
   projectId: UUIDSchema.optional().describe('Project context'),
 });
 
+/**
+ * Spec: GET /abx/api/resources/action-runs/{id}
+ * Only runId needed — the run endpoint is not nested under a specific action.
+ */
 export const AbxActionGetRunSchema = z.object({
-  actionId: UUIDSchema.describe('ABX Action UUID'),
-  runId: UUIDSchema.describe('Run UUID returned by vcf_abx_action_run'),
+  runId: UUIDSchema.describe('Action run UUID returned by vcf_abx_action_run'),
 });
 
 export type AbxActionListInput = z.infer<typeof AbxActionListSchema>;

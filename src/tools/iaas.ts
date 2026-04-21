@@ -26,13 +26,16 @@ export const IAAS_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_iaas_machine_list',
-      description: 'List virtual machines managed by VCF Cloud Assembly.',
+      description: 'List virtual machines managed by VCF Cloud Assembly. Uses OData pagination ($top/$skip).',
       inputSchema: {
         type: 'object',
         properties: {
-          projectId: { type: 'string' }, deploymentId: { type: 'string' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
+          projectId: { type: 'string', description: 'Filter by project UUID' },
+          deploymentId: { type: 'string', description: 'Filter by deployment UUID' },
+          $top: { type: 'number', description: 'Max items to return' },
+          $skip: { type: 'number', description: 'Items to skip' },
+          $filter: { type: 'string', description: 'OData filter expression' },
+          $orderby: { type: 'string', description: 'Sort field' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],
@@ -60,13 +63,15 @@ export const IAAS_TOOLS: ToolEntry[] = [
   {
     definition: {
       name: 'vcf_iaas_network_list',
-      description: 'List networks managed by VCF Cloud Assembly.',
+      description: 'List networks managed by VCF Cloud Assembly. Uses OData pagination ($top/$skip).',
       inputSchema: {
         type: 'object',
         properties: {
-          projectId: { type: 'string' },
-          $top: { type: 'number' }, $skip: { type: 'number' },
-          $filter: { type: 'string' }, $orderby: { type: 'string' },
+          projectId: { type: 'string', description: 'Filter by project UUID' },
+          $top: { type: 'number', description: 'Max items to return' },
+          $skip: { type: 'number', description: 'Items to skip' },
+          $filter: { type: 'string', description: 'OData filter expression' },
+          $orderby: { type: 'string', description: 'Sort field' },
         },
         additionalProperties: false,
       } satisfies Tool['inputSchema'],

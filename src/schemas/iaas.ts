@@ -3,10 +3,12 @@
  */
 
 import { z } from 'zod';
-import { PaginationSchema, UUIDSchema } from './common.js';
+import { IaasODataPaginationSchema, UUIDSchema } from './common.js';
 
-export const IaasMachineListSchema = PaginationSchema.extend({
-  projectId: UUIDSchema.optional().describe('Filter by project UUID'),
+// IaaS uses OData pagination ($top/$skip) — NOT Spring Pageable
+
+export const IaasMachineListSchema = IaasODataPaginationSchema.extend({
+  projectId: UUIDSchema.optional().describe('Filter by project UUID (added as $filter)'),
   deploymentId: UUIDSchema.optional().describe('Filter by deployment UUID'),
 });
 
@@ -14,8 +16,8 @@ export const IaasMachineGetSchema = z.object({
   machineId: UUIDSchema.describe('Machine UUID'),
 });
 
-export const IaasNetworkListSchema = PaginationSchema.extend({
-  projectId: UUIDSchema.optional(),
+export const IaasNetworkListSchema = IaasODataPaginationSchema.extend({
+  projectId: UUIDSchema.optional().describe('Filter by project UUID (added as $filter)'),
 });
 
 export const IaasNetworkGetSchema = z.object({

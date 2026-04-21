@@ -1,12 +1,18 @@
 /**
  * src/schemas/catalog.ts — Zod schemas for the Catalog domain
+ *
+ * Spec: Catalog_Deployment.yaml
+ * - GET  /catalog/api/items          → Spring Pageable (page/size/sort)
+ * - GET  /catalog/api/items/{id}     → single item
+ * - POST /catalog/api/items/{id}/request → create deployment from catalog item
  */
 
 import { z } from 'zod';
 import { PaginationSchema, UUIDSchema } from './common.js';
 
 export const CatalogListItemsSchema = PaginationSchema.extend({
-  projectId: UUIDSchema.optional().describe('Filter by project UUID'),
+  /** Comma-separated project UUIDs. Spec param name is 'projects'. */
+  projects: z.string().optional().describe('Comma-separated project UUIDs to filter by'),
   search: z.string().max(256).optional().describe('Free-text name search'),
 });
 
@@ -15,25 +21,22 @@ export const CatalogGetItemSchema = z.object({
   projectId: UUIDSchema.optional().describe('Project context for version resolution'),
 });
 
+/**
+ * Schema for POST /catalog/api/items/{id}/request
+ * Field names match the CatalogItemRequest schema in the spec:
+ *   - version (not catalogItemVersion) for the catalog item version
+ *   - deploymentName, projectId, inputs, reason — same as before
+ */
 export const CatalogRequestSchema = z.object({
-  catalogItemId: UUIDSchema.describe('Catalog item UUID to request'),
-  catalogItemVersion: z.string().max(64).optional().describe('Specific version (omit for latest)'),
-  deploymentName: z.string().min(1).max(256).describe('Name for the resulting deployment'),
+  catalogItemId: UUIDSchema.describe('Catalog item UUID (used as path parameter)'),
+  version: z.string().max(64).optional().describe('Catalog item version (omit for latest)'),
+  deploymentName: z.string().min(1).max(900).describe('Name for the resulting deployment'),
   projectId: UUIDSchema.describe('Target project UUID'),
   inputs: z.record(z.unknown()).optional().describe('Catalog item input parameters'),
-  reason: z.string().max(512).optional().describe('Request reason'),
-});
-
-export const CatalogListRequestsSchema = PaginationSchema.extend({
-  catalogItemId: UUIDSchema.optional().describe('Filter by catalog item UUID'),
-});
-
-export const CatalogGetRequestSchema = z.object({
-  requestId: UUIDSchema.describe('Catalog request UUID'),
+  reason: z.string().max(10240).optional().describe('Request reason'),
+  bulkRequestCount: z.number().int().min(1).optional().describe('Number of deployments to create (default 1)'),
 });
 
 export type CatalogListItemsInput = z.infer<typeof CatalogListItemsSchema>;
 export type CatalogGetItemInput = z.infer<typeof CatalogGetItemSchema>;
 export type CatalogRequestInput = z.infer<typeof CatalogRequestSchema>;
-export type CatalogListRequestsInput = z.infer<typeof CatalogListRequestsSchema>;
-export type CatalogGetRequestInput = z.infer<typeof CatalogGetRequestSchema>;

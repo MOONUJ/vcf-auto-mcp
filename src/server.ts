@@ -39,7 +39,7 @@ import type { ToolEntry } from './tools/deployments.js';
 const ALL_TOOLS: ToolEntry[] = [
   ...AUTH_TOOLS,        //  1 tool
   ...DEPLOYMENT_TOOLS,  //  7 tools  (includes vcf_deployment_list, _get, _create, _update, _delete, _get_status, _run_action)
-  ...CATALOG_TOOLS,     //  5 tools
+  ...CATALOG_TOOLS,     //  3 tools  (list_items, get_item, request — list_requests/get_request removed, not in spec)
   ...RESOURCE_TOOLS,    //  4 tools
   ...PROJECT_TOOLS,     //  5 tools
   ...BLUEPRINT_TOOLS,   //  7 tools  (list, get, create, update, delete, validate, list_versions)
@@ -48,7 +48,7 @@ const ALL_TOOLS: ToolEntry[] = [
   ...VRO_TOOLS,         //  8 tools
   ...VRO_VCO_TOOLS,     // 12 tools  (direct /vco/api/: workflows, executions, categories, actions, packages)
   ...GOVERNANCE_TOOLS,  //  2 tools
-  ...APPROVAL_TOOLS,         //  3 tools
+  ...APPROVAL_TOOLS,         //  3 tools  (list_requests, get_request, decide — endpoint changed to /approval/api/approvals)
   ...CUSTOM_RESOURCE_TOOLS,  //  7 tools  (resource_type: list, get, create, delete; resource_action: list, get, get_form_data)
 ];
 
@@ -102,14 +102,14 @@ export function createServer(): Server {
 }
 
 // ─── Tool count validation (compile-time documentation) ─────────────────────
-// Expected: 69 tools. Actual count logged at startup.
+// Expected: 67 tools. (69 - 2 removed: catalog list_requests/get_request — not in spec)
 export function logToolRegistration(): void {
   process.stderr.write(
     `[vcf-auto-mcp] Registered ${ALL_TOOLS.length} tools across 12 domains\n`,
   );
-  if (ALL_TOOLS.length !== 69) {
+  if (ALL_TOOLS.length !== 67) {
     process.stderr.write(
-      `[vcf-auto-mcp] WARNING: Expected 69 tools, got ${ALL_TOOLS.length}\n`,
+      `[vcf-auto-mcp] WARNING: Expected 67 tools, got ${ALL_TOOLS.length}\n`,
     );
   }
 }

@@ -12,8 +12,9 @@ import type {
 } from '../schemas/abx.js';
 
 export async function apiListAbxActions(input: AbxActionListInput): Promise<VcfPage<VcfAbxAction>> {
-  const { projectId, ...pagination } = input;
-  const params: Record<string, unknown> = { ...pagination };
+  const { projectId, page, size, sort } = input;
+  const params: Record<string, unknown> = { page, size };
+  if (sort) params['sort'] = sort;
   if (projectId) params['projectId'] = projectId;
   return vcfGet('/abx/api/resources/actions', params);
 }
@@ -24,13 +25,17 @@ export async function apiGetAbxAction(input: AbxActionGetInput): Promise<VcfAbxA
 
 export async function apiRunAbxAction(
   input: AbxActionRunInput,
-): Promise<{ runId: string; status: string }> {
-  const body: Record<string, unknown> = {};
+): Promise<VcfAbxRun> {
+  const body: Record<string, unknown> = {
+    actionId: input.actionId,
+  };
   if (input.inputs) body['inputs'] = input.inputs;
   if (input.projectId) body['projectId'] = input.projectId;
-  return vcfPost(`/abx/api/resources/actions/${input.actionId}/runs`, body);
+  // Spec: POST /abx/api/resources/actions/{id}/action-runs (not /runs)
+  return vcfPost(`/abx/api/resources/actions/${input.actionId}/action-runs`, body);
 }
 
 export async function apiGetAbxRun(input: AbxActionGetRunInput): Promise<VcfAbxRun> {
-  return vcfGet(`/abx/api/resources/actions/${input.actionId}/runs/${input.runId}`);
+  // Spec: GET /abx/api/resources/action-runs/{id} (top-level, not nested under action)
+  return vcfGet(`/abx/api/resources/action-runs/${input.runId}`);
 }
