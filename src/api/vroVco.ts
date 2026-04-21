@@ -11,7 +11,7 @@
  *   normalizeVcoList — maps a raw VCO link-list into a consistent { items, total } shape
  */
 
-import { vcfGet, vcfPost } from './client.js';
+import { vcfGet, vcfPost, vcfPut, vcfDelete } from './client.js';
 import type {
   VcoWorkflowListInput,
   VcoWorkflowGetInput,
@@ -25,6 +25,14 @@ import type {
   VcoActionGetInput,
   VcoPackageListInput,
   VcoPackageGetInput,
+  VcoWorkflowCreateInput,
+  VcoWorkflowUpdateContentInput,
+  VcoActionUpdateInput,
+  VcoCategoryCreateInput,
+  VcoCategoryUpdateInput,
+  VcoCategoryDeleteInput,
+  VcoConfigurationUpdateInput,
+  VcoConfigurationDeleteInput,
 } from '../schemas/vroVco.js';
 
 // ─── VCO response types ───────────────────────────────────────────────────────
@@ -258,4 +266,103 @@ export async function apiVcoListPackages(input: VcoPackageListInput): Promise<un
  */
 export async function apiVcoGetPackage(input: VcoPackageGetInput): Promise<unknown> {
   return vcfGet<unknown>(`/vco/api/packages/${input.name}`);
+}
+
+// ─── Mutation APIs ────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new vRO workflow definition via POST /vco/api/workflows.
+ * The workflow content (items, schema) is typically uploaded separately using
+ * apiVcoUpdateWorkflowContent.
+ *
+ * @param input - Validated VcoWorkflowCreateInput
+ * @returns Created workflow record
+ */
+export async function apiVcoCreateWorkflow(input: VcoWorkflowCreateInput): Promise<unknown> {
+  return vcfPost<unknown>('/vco/api/workflows', input);
+}
+
+/**
+ * Uploads the full workflow content body via PUT /vco/api/workflows/{id}/content.
+ * This replaces the workflow's step definitions, attributes, and parameters.
+ *
+ * @param input - Validated VcoWorkflowUpdateContentInput (id + full content body)
+ * @returns Updated workflow record or empty on success
+ */
+export async function apiVcoUpdateWorkflowContent(
+  input: VcoWorkflowUpdateContentInput,
+): Promise<unknown> {
+  const { id, ...body } = input;
+  return vcfPut<unknown>(`/vco/api/workflows/${id}/content`, body);
+}
+
+/**
+ * Updates a vRO scriptable action definition via PUT /vco/api/actions/{id}.
+ * The id is the qualified name, e.g. "com.example.module/actionName".
+ *
+ * @param input - Validated VcoActionUpdateInput
+ * @returns Updated action record
+ */
+export async function apiVcoUpdateAction(input: VcoActionUpdateInput): Promise<unknown> {
+  const { id, ...body } = input;
+  return vcfPut<unknown>(`/vco/api/actions/${encodeURIComponent(id)}`, body);
+}
+
+/**
+ * Creates a sub-category inside an existing category via POST /vco/api/categories/{id}.
+ * The path {id} is the parent category UUID.
+ *
+ * @param input - Validated VcoCategoryCreateInput
+ * @returns Created category record
+ */
+export async function apiVcoCreateCategory(input: VcoCategoryCreateInput): Promise<unknown> {
+  const { id, ...body } = input;
+  return vcfPost<unknown>(`/vco/api/categories/${id}`, body);
+}
+
+/**
+ * Updates an existing vRO category via PUT /vco/api/categories/{id}.
+ *
+ * @param input - Validated VcoCategoryUpdateInput
+ * @returns Updated category record
+ */
+export async function apiVcoUpdateCategory(input: VcoCategoryUpdateInput): Promise<unknown> {
+  const { id, ...body } = input;
+  return vcfPut<unknown>(`/vco/api/categories/${id}`, body);
+}
+
+/**
+ * Deletes a vRO category via DELETE /vco/api/categories/{id}.
+ * The category must be empty (no child categories or workflows) before deletion.
+ *
+ * @param input - Validated VcoCategoryDeleteInput
+ * @returns Empty response on success
+ */
+export async function apiVcoDeleteCategory(input: VcoCategoryDeleteInput): Promise<void> {
+  return vcfDelete(`/vco/api/categories/${input.id}`);
+}
+
+/**
+ * Updates a vRO configuration element via PUT /vco/api/configurations/{id}.
+ *
+ * @param input - Validated VcoConfigurationUpdateInput
+ * @returns Updated configuration record
+ */
+export async function apiVcoUpdateConfiguration(
+  input: VcoConfigurationUpdateInput,
+): Promise<unknown> {
+  const { id, ...body } = input;
+  return vcfPut<unknown>(`/vco/api/configurations/${id}`, body);
+}
+
+/**
+ * Deletes a vRO configuration element via DELETE /vco/api/configurations/{id}.
+ *
+ * @param input - Validated VcoConfigurationDeleteInput
+ * @returns Empty response on success
+ */
+export async function apiVcoDeleteConfiguration(
+  input: VcoConfigurationDeleteInput,
+): Promise<void> {
+  return vcfDelete(`/vco/api/configurations/${input.id}`);
 }

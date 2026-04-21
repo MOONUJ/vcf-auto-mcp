@@ -1,7 +1,7 @@
 /**
  * src/server.ts — MCP Server factory + tool registration
  *
- * Creates the McpServer instance and registers all 69 tools from 12 domains.
+ * Creates the McpServer instance and registers all 84 tools from 12 domains.
  * Tool dispatch follows a Map<name, handler> lookup for O(1) routing.
  *
  * Adding a new domain:
@@ -44,9 +44,9 @@ const ALL_TOOLS: ToolEntry[] = [
   ...PROJECT_TOOLS,     //  5 tools
   ...BLUEPRINT_TOOLS,   //  7 tools  (list, get, create, update, delete, validate, list_versions)
   ...IAAS_TOOLS,        //  4 tools
-  ...ABX_TOOLS,         //  4 tools
+  ...ABX_TOOLS,         // 13 tools  (4 read + 9 write: create/update/delete action, create_version, release, run_cancel, secret CRUD)
   ...VRO_TOOLS,         //  8 tools
-  ...VRO_VCO_TOOLS,     // 12 tools  (direct /vco/api/: workflows, executions, categories, actions, packages)
+  ...VRO_VCO_TOOLS,     // 20 tools  (12 read + 8 write: workflow create/update, action update, category CUD, configuration UD)
   ...GOVERNANCE_TOOLS,  //  2 tools
   ...APPROVAL_TOOLS,         //  3 tools  (list_requests, get_request, decide — endpoint changed to /approval/api/approvals)
   ...CUSTOM_RESOURCE_TOOLS,  //  7 tools  (resource_type: list, get, create, delete; resource_action: list, get, get_form_data)
@@ -102,14 +102,14 @@ export function createServer(): Server {
 }
 
 // ─── Tool count validation (compile-time documentation) ─────────────────────
-// Expected: 67 tools. (69 - 2 removed: catalog list_requests/get_request — not in spec)
+// Expected: 84 tools. (67 baseline + 9 ABX write + 8 vRO Direct write)
 export function logToolRegistration(): void {
   process.stderr.write(
     `[vcf-auto-mcp] Registered ${ALL_TOOLS.length} tools across 12 domains\n`,
   );
-  if (ALL_TOOLS.length !== 67) {
+  if (ALL_TOOLS.length !== 84) {
     process.stderr.write(
-      `[vcf-auto-mcp] WARNING: Expected 67 tools, got ${ALL_TOOLS.length}\n`,
+      `[vcf-auto-mcp] WARNING: Expected 84 tools, got ${ALL_TOOLS.length}\n`,
     );
   }
 }

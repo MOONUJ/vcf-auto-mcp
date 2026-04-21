@@ -2,18 +2,26 @@
  * src/tools/vroVco.ts — MCP tools for the direct vRO API (/vco/api/) domain
  *
  * Implements 12 tools backed by the native vRO REST API:
- *   vcf_vro_direct_workflow_list    — GET  /vco/api/workflows
- *   vcf_vro_direct_workflow_get     — GET  /vco/api/workflows/{id}
- *   vcf_vro_direct_workflow_execute — POST /vco/api/workflows/{id}/executions
- *   vcf_vro_direct_execution_list   — GET  /vco/api/workflows/{id}/executions
- *   vcf_vro_direct_execution_get    — GET  /vco/api/workflows/{id}/executions/{execId}
- *   vcf_vro_direct_execution_logs   — GET  /vco/api/workflows/{id}/executions/{execId}/logs
- *   vcf_vro_direct_category_list    — GET  /vco/api/categories
- *   vcf_vro_direct_category_get     — GET  /vco/api/categories/{id}
- *   vcf_vro_direct_action_list      — GET  /vco/api/actions
- *   vcf_vro_direct_action_get       — GET  /vco/api/actions/{id}
- *   vcf_vro_direct_package_list     — GET  /vco/api/packages
- *   vcf_vro_direct_package_get      — GET  /vco/api/packages/{name}
+ *   vcf_vro_direct_workflow_list          — GET    /vco/api/workflows
+ *   vcf_vro_direct_workflow_get           — GET    /vco/api/workflows/{id}
+ *   vcf_vro_direct_workflow_execute       — POST   /vco/api/workflows/{id}/executions
+ *   vcf_vro_direct_execution_list         — GET    /vco/api/workflows/{id}/executions
+ *   vcf_vro_direct_execution_get          — GET    /vco/api/workflows/{id}/executions/{execId}
+ *   vcf_vro_direct_execution_logs         — GET    /vco/api/workflows/{id}/executions/{execId}/logs
+ *   vcf_vro_direct_category_list          — GET    /vco/api/categories
+ *   vcf_vro_direct_category_get           — GET    /vco/api/categories/{id}
+ *   vcf_vro_direct_action_list            — GET    /vco/api/actions
+ *   vcf_vro_direct_action_get             — GET    /vco/api/actions/{id}
+ *   vcf_vro_direct_package_list           — GET    /vco/api/packages
+ *   vcf_vro_direct_package_get            — GET    /vco/api/packages/{name}
+ *   vcf_vro_direct_workflow_create        — POST   /vco/api/workflows
+ *   vcf_vro_direct_workflow_update        — PUT    /vco/api/workflows/{id}/content
+ *   vcf_vro_direct_action_update          — PUT    /vco/api/actions/{id}
+ *   vcf_vro_direct_category_create        — POST   /vco/api/categories/{id}
+ *   vcf_vro_direct_category_update        — PUT    /vco/api/categories/{id}
+ *   vcf_vro_direct_category_delete        — DELETE /vco/api/categories/{id}
+ *   vcf_vro_direct_configuration_update   — PUT    /vco/api/configurations/{id}
+ *   vcf_vro_direct_configuration_delete   — DELETE /vco/api/configurations/{id}
  *
  * These tools differ from VRO_TOOLS in that they call the native /vco/api/
  * endpoint directly, bypassing the OrchestratorGateway. The response shape
@@ -35,6 +43,14 @@ import {
   VcoActionGetSchema,
   VcoPackageListSchema,
   VcoPackageGetSchema,
+  VcoWorkflowCreateSchema,
+  VcoWorkflowUpdateContentSchema,
+  VcoActionUpdateSchema,
+  VcoCategoryCreateSchema,
+  VcoCategoryUpdateSchema,
+  VcoCategoryDeleteSchema,
+  VcoConfigurationUpdateSchema,
+  VcoConfigurationDeleteSchema,
 } from '../schemas/vroVco.js';
 import {
   apiVcoListWorkflows,
@@ -49,6 +65,14 @@ import {
   apiVcoGetAction,
   apiVcoListPackages,
   apiVcoGetPackage,
+  apiVcoCreateWorkflow,
+  apiVcoUpdateWorkflowContent,
+  apiVcoUpdateAction,
+  apiVcoCreateCategory,
+  apiVcoUpdateCategory,
+  apiVcoDeleteCategory,
+  apiVcoUpdateConfiguration,
+  apiVcoDeleteConfiguration,
 } from '../api/vroVco.js';
 import type { ToolEntry } from './deployments.js';
 
@@ -499,6 +523,284 @@ export const VRO_VCO_TOOLS: ToolEntry[] = [
     handler: async (args) => {
       try {
         return ok(await apiVcoGetPackage(VcoPackageGetSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_workflow_create ───────────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_workflow_create',
+      description:
+        'Create a new vRO workflow definition via the native vRO API ' +
+        '(POST /vco/api/workflows). ' +
+        'Creates an empty workflow shell; use vcf_vro_direct_workflow_update to upload ' +
+        'the full content (steps, attributes, parameters).',
+      inputSchema: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name:        { type: 'string', description: 'Workflow display name' },
+          description: { type: 'string' },
+          'category-id': { type: 'string', description: 'Parent category UUID' },
+          version:     { type: 'string', description: 'Version string, e.g. "0.0.1"' },
+          inputParameters:  {
+            type: 'array',
+            items: { type: 'object' },
+            description: 'Input parameter definitions',
+          },
+          outputParameters: {
+            type: 'array',
+            items: { type: 'object' },
+            description: 'Output parameter definitions',
+          },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        return ok(await apiVcoCreateWorkflow(VcoWorkflowCreateSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_workflow_update ───────────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_workflow_update',
+      description:
+        'Upload the full content body for a vRO workflow via the native vRO API ' +
+        '(PUT /vco/api/workflows/{id}/content). ' +
+        'This replaces the workflow\'s steps (workflow-item), attributes, and parameter schemas. ' +
+        'Obtain the current content with vcf_vro_direct_workflow_get before editing.',
+      inputSchema: {
+        type: 'object',
+        required: ['id', 'display-name', 'description'],
+        properties: {
+          id:              { type: 'string', description: 'vRO Workflow UUID' },
+          'display-name':  { type: 'string', description: 'Workflow display name' },
+          description:     { type: 'string' },
+          version:         { type: 'string' },
+          'category-id':   { type: 'string', description: 'Category UUID' },
+          'ref-types':     { type: 'string', description: 'Referenced types (comma-separated)' },
+          input:           { type: 'object', description: 'Input parameter schema' },
+          output:          { type: 'object', description: 'Output parameter schema' },
+          attrib:          { type: 'array', items: { type: 'object' }, description: 'Workflow attributes' },
+          presentation:    { type: 'object', description: 'Presentation schema' },
+          'workflow-item': { type: 'array', items: { type: 'object' }, description: 'Workflow step definitions' },
+          'workflow-note': { type: 'array', items: { type: 'object' }, description: 'Workflow notes/annotations' },
+          'error-handler': { type: 'array', items: { type: 'object' } },
+          restartMode:     { type: 'number' },
+          resumeFromFailedMode: { type: 'number' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        return ok(await apiVcoUpdateWorkflowContent(VcoWorkflowUpdateContentSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_action_update ─────────────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_action_update',
+      description:
+        'Update a vRO scriptable action definition via the native vRO API ' +
+        '(PUT /vco/api/actions/{id}). ' +
+        'The id is the qualified name "module/actionName". ' +
+        'Use vcf_vro_direct_action_get to retrieve the current definition before editing.',
+      inputSchema: {
+        type: 'object',
+        required: ['id', 'name', 'module'],
+        properties: {
+          id:                  { type: 'string', description: 'Action qualified ID, e.g. "com.example.module/actionName"' },
+          name:                { type: 'string', description: 'Action simple name' },
+          module:              { type: 'string', description: 'Module namespace' },
+          description:         { type: 'string' },
+          version:             { type: 'string' },
+          script:              { type: 'string', description: 'JavaScript source code' },
+          runtime:             { type: 'string' },
+          outputParameterType: { type: 'string', description: 'Return type, e.g. "string"' },
+          'input-parameters':  { type: 'array', items: { type: 'object' }, description: 'Input parameter definitions' },
+          'output-type':       { type: 'string' },
+          runtimeMemoryLimit:  { type: 'number', description: 'Memory limit in bytes' },
+          runtimeTimeout:      { type: 'number', description: 'Timeout in seconds' },
+          entryPoint:          { type: 'string', description: 'Entry point for bundle-based actions' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        return ok(await apiVcoUpdateAction(VcoActionUpdateSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_category_create ──────────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_category_create',
+      description:
+        'Create a sub-category inside an existing vRO category via the native vRO API ' +
+        '(POST /vco/api/categories/{id}). ' +
+        'The "id" field is the parent category UUID.',
+      inputSchema: {
+        type: 'object',
+        required: ['id', 'name'],
+        properties: {
+          id:           { type: 'string', description: 'Parent category UUID' },
+          name:         { type: 'string', description: 'New sub-category name' },
+          categoryType: { type: 'string', description: 'Category type, e.g. "WorkflowCategory"' },
+          description:  { type: 'string' },
+          'parent-category-id': { type: 'string', description: 'Explicit parent UUID (overrides path id)' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        return ok(await apiVcoCreateCategory(VcoCategoryCreateSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_category_update ──────────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_category_update',
+      description:
+        'Update an existing vRO category via the native vRO API ' +
+        '(PUT /vco/api/categories/{id}).',
+      inputSchema: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id:           { type: 'string', description: 'Category UUID to update' },
+          name:         { type: 'string', description: 'New category name' },
+          categoryType: { type: 'string' },
+          description:  { type: 'string' },
+          'parent-category-id': { type: 'string', description: 'New parent category UUID' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        return ok(await apiVcoUpdateCategory(VcoCategoryUpdateSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_category_delete ──────────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_category_delete',
+      description:
+        'DESTRUCTIVE: Delete a vRO category via the native vRO API ' +
+        '(DELETE /vco/api/categories/{id}). ' +
+        'The category must be empty (no child categories or workflows). ' +
+        'This cannot be undone.',
+      inputSchema: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', description: 'Category UUID to delete' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        await apiVcoDeleteCategory(VcoCategoryDeleteSchema.parse(args));
+        return ok({ success: true, message: 'Category deleted.' });
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_configuration_update ─────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_configuration_update',
+      description:
+        'Update a vRO configuration element via the native vRO API ' +
+        '(PUT /vco/api/configurations/{id}). ' +
+        'Configuration elements store typed key-value pairs used by workflows at runtime.',
+      inputSchema: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id:          { type: 'string', description: 'Configuration element UUID' },
+          name:        { type: 'string', description: 'Configuration name' },
+          description: { type: 'string' },
+          version:     { type: 'string' },
+          'category-id': { type: 'string', description: 'Category UUID' },
+          attributes:  {
+            type: 'array',
+            items: { type: 'object' },
+            description: 'Configuration attribute definitions (name, type, value triples)',
+          },
+          status:      { type: 'number', description: 'Configuration status code' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        return ok(await apiVcoUpdateConfiguration(VcoConfigurationUpdateSchema.parse(args)));
+      } catch (e) {
+        if (e instanceof McpError) throw e;
+        throw ve(e);
+      }
+    },
+  },
+
+  // ── vcf_vro_direct_configuration_delete ─────────────────────────────────────
+  {
+    definition: {
+      name: 'vcf_vro_direct_configuration_delete',
+      description:
+        'DESTRUCTIVE: Delete a vRO configuration element via the native vRO API ' +
+        '(DELETE /vco/api/configurations/{id}). ' +
+        'Workflows that reference this configuration element will fail at runtime after deletion.',
+      inputSchema: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string', description: 'Configuration element UUID to delete' },
+        },
+        additionalProperties: false,
+      } satisfies Tool['inputSchema'],
+    },
+    handler: async (args) => {
+      try {
+        await apiVcoDeleteConfiguration(VcoConfigurationDeleteSchema.parse(args));
+        return ok({ success: true, message: 'Configuration element deleted.' });
       } catch (e) {
         if (e instanceof McpError) throw e;
         throw ve(e);
